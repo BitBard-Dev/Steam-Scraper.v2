@@ -17,7 +17,7 @@ PROCESSED_CSV = "processed_apps.csv"  # "Running tally" for successfully process
 OUTPUT_JSON = "steam_games_filtered.json"  # Output JSON for games only
 
 # Steam API rate limits. Lack of API key leads to these approximate rate limits.
-# ??? Improvement: implement pythong "logging" function with BATCH_SIZE of 1 and REQUST_INTERVAL of 1.5. Better with UI.
+# ??? Improvement: implement python "logging" function with BATCH_SIZE of 1 and REQUST_INTERVAL of 1.5. Better with UI.
 BATCH_SIZE = 200  # Max requests per 5 minutes (Steam API limit)
 REQUEST_INTERVAL = 305  # Wait time after batch completion (5 minutes + buffer)
 
@@ -125,7 +125,7 @@ def save_data_to_json(new_data, filename):
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(existing_data, f, indent=4, ensure_ascii=False)
 
-    print(f"✅ {len(new_data)} new games added to {filename}")
+    print(f"{len(new_data)} new games added to {filename}")
 
 def save_processed_apps_to_csv(processed_apps):
     """Logs ALL processed apps, including non-games and errors, to avoid re-querying"""
@@ -209,7 +209,7 @@ if __name__ == "__main__":
     duration = end_time - start_time
     print(f"Total execution time: {str(duration)}")
 
-    ## Step 4: Verify All Steam Apps Were Processed by comparing steam_valid_apps_unique.csv and processed_apps.csv
+## Step 4: Verify All Steam Apps Were Processed by comparing steam_valid_apps_unique.csv and processed_apps.csv
 import pandas as pd
 
 # File paths

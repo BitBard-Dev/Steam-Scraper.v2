@@ -12,3 +12,9 @@
 - Step 3: Query Steam API to Pull All AppDetails for Each Steam App ID
 - Step 4: Pull Game AppDetails from the steam_apps_grouped JSON File
     - Step 4a: Remove Documents with Duplicate App ID
+
+
+Improvements/Fixes:
+- Ensure file name variables are unique or consistent across functions/steps
+
+

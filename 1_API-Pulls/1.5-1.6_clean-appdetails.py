@@ -19,7 +19,7 @@ def clean_steam_json(input_file, output_file):
         with open(input_file, "r", encoding="utf-8") as f:
             games_data = json.load(f)
         
-        # ✅ Keep only relevant attributes
+        # Keep only relevant attributes
         cleaned_data = [{k: v for k, v in game.items() if k in keep_keys} for game in games_data]
 
         # Save cleaned JSON
