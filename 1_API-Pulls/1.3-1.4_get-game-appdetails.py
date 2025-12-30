@@ -7,7 +7,7 @@ from global_variables import VALID_APPS_UNIQUE_CSV, PROCESSED_APPS_CSV, APP_DETA
 # ??? Improvement: implement python "logging" module with STEAM_BATCH_SIZE of 1 and REQUST_INTERVAL of 1.5. Better with UI.
 
 def fetch_app_detail(app_id):
-    """Fetch details for a single app with retry handling."""
+    """Sequentially fetch details for each appid with retry handling."""
     url = APP_DETAILS_URL.format(app_id)
     attempts = 3  # Max attempts for failures
 
@@ -18,7 +18,7 @@ def fetch_app_detail(app_id):
             if response.status_code == 429:  # Too Many Requests
                 print(f"429 Too Many Requests for {app_id}. Waiting 30 seconds...")
                 time.sleep(30)
-                continue  # Retry
+                continue
 
             if response.status_code != 200:
                 print(f"Error {response.status_code} fetching {app_id}: {response.text}")
@@ -39,7 +39,7 @@ def fetch_app_detail(app_id):
             # Extract actual game data
             game_info = app_data["data"]
 
-            # Ensure it's a game before returning appdetails
+            # Ensure appid is a game before returning appdetails
             if game_info.get("type") == "game":
                 return game_info
             else:
@@ -50,8 +50,9 @@ def fetch_app_detail(app_id):
             print(f"Network error while fetching {app_id}: {e}")
             return {"appid": app_id, "error": "Network error"}
 
+    # Not encountered when first running this program (FEB2025). Needed to prevent infinite loop
     print(f"Repeated failures for {app_id}. Skipping.")
-    return {"appid": app_id, "error": "Too Many Requests - Skipped"}
+    return {"appid": app_id, "error": "Too Many Requests - Skipped"} 
 
 def load_valid_apps():
     """Loads valid app IDs from the CSV file."""
