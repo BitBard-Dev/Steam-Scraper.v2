@@ -1,3 +1,6 @@
+
+## ??? Ensure all global variables are defined in the local function to eliminate global calls & reduce memory/increase speed 
+
 # 1_API-Pulls
     # 1.1-1.2
 # STEAMKEY = __________

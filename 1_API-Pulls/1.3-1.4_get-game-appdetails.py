@@ -3,7 +3,7 @@ from global_variables import VALID_APPS_UNIQUE_CSV, PROCESSED_APPS_CSV, APP_DETA
 ## Step 3: Query Steam AppDetails API to Pull Details for Each Steam App ID, pulling only "game" details
     ## Save  details to JSON (queried from API as JSON), log processed apps in processed_apps.csv
 
-# Steam API rate limits. Lack of API key leads to these approximate rate limits.
+# Steam API rate limits. Lack of API key leads to these approximate rate limits (200 queries/5 minutes).
 # ??? Improvement: implement python "logging" module with STEAM_BATCH_SIZE of 1 and REQUST_INTERVAL of 1.5. Better with UI.
 
 def fetch_app_detail(app_id):
@@ -50,7 +50,7 @@ def fetch_app_detail(app_id):
             print(f"Network error while fetching {app_id}: {e}")
             return {"appid": app_id, "error": "Network error"}
 
-    # Not encountered when first running this program (FEB2025). Needed to prevent infinite loop
+    # Not encountered when first running this program (FEB2025). Rate limiting kept within Steam API's limits. Keep to avoid infinite loop.
     print(f"Repeated failures for {app_id}. Skipping.")
     return {"appid": app_id, "error": "Too Many Requests - Skipped"} 
 

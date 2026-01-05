@@ -322,10 +322,10 @@ print(f"There are {total_entries_gametype} rows in the gametype_info table.")
 # Count total distinct games in .sqlite file
 cur.execute("SELECT COUNT(DISTINCT steam_appid) FROM gametype_info")
 unique_games = cur.fetchone()[0]
-print(f"There are {unique_games} unique games in the gametype_info table.\nGames lost: {96039 - unique_games}")
+print(f"There are {unique_games} unique games in the gametype_info table.\nGames lost: {96039 - unique_games}") # ??? 96039 == magic number. Verify total games from previous steps. Create global variable to track unique games
 
 # Fetch and display first record
-cur.execute("SELECT * FROM gametype_info WHERE steam_appid = 400")
+cur.execute("SELECT * FROM gametype_info WHERE steam_appid = 400") # ??? pseudo magic number. Portal has appid 400. This step originally done to satisfy assignment requirments.
 portal_game = cur.fetchone()
 columns = ["id", "steam_appid", "category_id", "category_description", "genre_id", "genre_description", "total_recommendations"]
 
@@ -339,7 +339,7 @@ else:
 cur.close()
 conn.close()
 
-# Step 9.9: Create "language" table & insert data
+# Step 9.9: Create "language_info" table & insert data
 # connect to the SQLite database & define cursor
 conn = sqlite3.connect('PROJECT_PHASE2.sqlite')
 cur = conn.cursor()

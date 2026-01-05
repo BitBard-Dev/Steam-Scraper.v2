@@ -153,5 +153,5 @@ MISSING_APPS_CSV = "steamspy_missing_apps.csv"  # (Optional) Output file for mis
 # Run the comparison
 find_missing_apps()
 
-## Step 7.3: Ensure SteamSpy JSON data is incorporated into Steam AppDetails API JSON
-#???
+## Step 7.3: Ensure SteamSpy JSON data is combined with Steam AppDetails API JSON
+    # ??? This was clearly completed in the original project as the data is incorporated in "PROJECT_PHASE2.sqlite". However it isn't documented anywhere in the .ipynb files.
