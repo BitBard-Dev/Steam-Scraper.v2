@@ -1,33 +1,13 @@
+from global_variables import VALID_APPS_UNIQUE_CSV, PROCESSED_APPS_CSV, APP_DETAILS_URL, GAMES_ONLY_JSON, MISSING_APPS_CSV, HEADERS
+
 ## Step 3: Query Steam AppDetails API to Pull Details for Each Steam App ID, pulling only "game" details
     ## Save  details to JSON (queried from API as JSON), log processed apps in processed_apps.csv
-import requests
-import pandas as pd
-import json
-import time
-import os
-import datetime
 
-# Steam API URL
-# ??? URL no longer valid Fall 2025 test queries return only null, even for known appids. Further investigation needed.
-APP_DETAILS_URL = "https://store.steampowered.com/api/appdetails?appids={}"
-
-# File paths
-CSV_FILE = "steam_valid_apps_unique.csv"  # Input CSV with valid App IDs
-PROCESSED_CSV = "processed_apps.csv"  # "Running tally" for successfully processed apps
-OUTPUT_JSON = "steam_games_filtered.json"  # Output JSON for games only
-
-# Steam API rate limits. Lack of API key leads to these approximate rate limits.
-# ??? Improvement: implement python "logging" function with BATCH_SIZE of 1 and REQUST_INTERVAL of 1.5. Better with UI.
-BATCH_SIZE = 200  # Max requests per 5 minutes (Steam API limit)
-REQUEST_INTERVAL = 305  # Wait time after batch completion (5 minutes + buffer)
-
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-}  # Spoofs as a regular user to reduce risk of blocking.
-# ??? Retest if this header is still necessary with new API path.
+# Steam API rate limits. Lack of API key leads to these approximate rate limits (200 queries/5 minutes).
+# ??? Improvement: implement python "logging" module with STEAM_BATCH_SIZE of 1 and REQUST_INTERVAL of 1.5. Better with UI.
 
 def fetch_app_detail(app_id):
-    """Fetch details for a single app with retry handling."""
+    """Sequentially fetch details for each appid with retry handling."""
     url = APP_DETAILS_URL.format(app_id)
     attempts = 3  # Max attempts for failures
 
@@ -38,7 +18,7 @@ def fetch_app_detail(app_id):
             if response.status_code == 429:  # Too Many Requests
                 print(f"429 Too Many Requests for {app_id}. Waiting 30 seconds...")
                 time.sleep(30)
-                continue  # Retry
+                continue
 
             if response.status_code != 200:
                 print(f"Error {response.status_code} fetching {app_id}: {response.text}")
@@ -59,7 +39,7 @@ def fetch_app_detail(app_id):
             # Extract actual game data
             game_info = app_data["data"]
 
-            # Ensure it's a game before returning appdetails
+            # Ensure appid is a game before returning appdetails
             if game_info.get("type") == "game":
                 return game_info
             else:
@@ -70,12 +50,13 @@ def fetch_app_detail(app_id):
             print(f"Network error while fetching {app_id}: {e}")
             return {"appid": app_id, "error": "Network error"}
 
+    # Not encountered when first running this program (FEB2025). Rate limiting kept within Steam API's limits. Keep to avoid infinite loop.
     print(f"Repeated failures for {app_id}. Skipping.")
-    return {"appid": app_id, "error": "Too Many Requests - Skipped"}
+    return {"appid": app_id, "error": "Too Many Requests - Skipped"} 
 
 def load_valid_apps():
     """Loads valid app IDs from the CSV file."""
-    df = pd.read_csv(CSV_FILE)
+    df = pd.read_csv(VALID_APPS_UNIQUE_CSV)
     return df["appid"].tolist()
 
 def load_existing_json():
@@ -91,7 +72,7 @@ def load_existing_json():
             print(f"Error reading processed_apps.csv: {e}")
 
     try:
-        with open(OUTPUT_JSON, "r", encoding="utf-8") as f:
+        with open(GAMES_ONLY_JSON, "r", encoding="utf-8") as f:
             existing_data = json.load(f)
             if not isinstance(existing_data, list): #Ensure it's a list
                 existing_data = []
@@ -99,7 +80,10 @@ def load_existing_json():
         existing_data = []  # Now using a list instead of a dictionary
 
     # Extract processed app IDs from JSON
-    processed_app_ids.update({app["steam_appid"] for app in existing_data if isinstance(app, dict)})
+    for app in existing_data:
+        if isinstance(app, dict):
+            processed_app_ids.update({app["steam_appid"]})
+
 
     return existing_data, processed_app_ids
 
@@ -128,13 +112,13 @@ def save_data_to_json(new_data, filename):
     print(f"{len(new_data)} new games added to {filename}")
 
 def save_processed_apps_to_csv(processed_apps):
-    """Logs ALL processed apps, including non-games and errors, to avoid re-querying"""
+    """Logs ALL processed apps, including non-games and errors???, to avoid re-querying"""
     df = pd.DataFrame(processed_apps, columns=["appid", "name", "status"])
     
     if not os.path.exists(PROCESSED_CSV):
         df.to_csv(PROCESSED_CSV, index=False)  # Create new file
     else:
-        df.to_csv(PROCESSED_CSV, mode="a", index=False, header=False)  # Append without headers
+        df.to_csv(PROCESSED_CSV, mode="a", index=False, header=False)  # Append without column headers ???NECESSARY???
 
     print(f"Processed {len(processed_apps)} apps. Logged to {PROCESSED_CSV}")
 
@@ -145,6 +129,7 @@ def count_processed_apps():
         return len(df) # Count total rows in processed_apps.csv
     return 0 # Returns 0 if file doesn't exist or no apps processed yet
 
+# run in main.py ???
 def main():
     """Fetches Steam app details sequentially, logging processed app IDs and names."""
     all_valid_app_ids = load_valid_apps()
@@ -156,8 +141,8 @@ def main():
         return
 
     while unprocessed_app_ids:
-        batch = unprocessed_app_ids[:BATCH_SIZE]  # Query up to BATCH_SIZE IDs
-        unprocessed_app_ids = unprocessed_app_ids[BATCH_SIZE:]  # Remove processed batch from unprocessed list
+        batch = unprocessed_app_ids[:STEAM_BATCH_SIZE]  # Query up to STEAM_BATCH_SIZE IDs
+        unprocessed_app_ids = unprocessed_app_ids[STEAM_BATCH_SIZE:]  # Remove processed batch from unprocessed list
 
         print(f"\nProcessing {len(batch)} new app IDs...")
 
@@ -180,7 +165,7 @@ def main():
 
         # Save only games to JSON
         if new_games:
-            save_data_to_json(new_games, OUTPUT_JSON) 
+            save_data_to_json(new_games, GAMES_ONLY_JSON) 
 
         # Get running total of processed apps
         total_processed_apps = count_processed_apps()
@@ -195,8 +180,9 @@ def main():
         
         # Wait before next batch
         print("\n⏳ Waiting 5 minutes before the next batch...")
-        time.sleep(REQUEST_INTERVAL)
+        time.sleep(STEAM_REQUEST_INTERVAL)
 
+# run in main.py ???
 if __name__ == "__main__":
     start_time = datetime.datetime.now()
     print(f"Script started at: {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -210,17 +196,11 @@ if __name__ == "__main__":
     print(f"Total execution time: {str(duration)}")
 
 ## Step 4: Verify All Steam Apps Were Processed by comparing steam_valid_apps_unique.csv and processed_apps.csv
-import pandas as pd
-
-# File paths
-VALID_APPS_CSV = "steam_valid_apps_unique.csv"  # Apps that should have been processed
-PROCESSED_APPS_CSV = "processed_apps.csv"  # Apps that were actually processed
-MISSING_APPS_CSV = "missing_apps.csv"  # Output file for any missing apps
 
 def find_missing_apps():
     """Compares two CSV files and finds unprocessed app IDs."""
     # Load both CSVs
-    valid_apps = pd.read_csv(VALID_APPS_CSV, usecols=["appid"])
+    valid_apps = pd.read_csv(VALID_APPS_UNIQUE_CSV, usecols=["appid"])
     processed_apps = pd.read_csv(PROCESSED_APPS_CSV, usecols=["appid"])
 
     # Convert to sets for fast comparison

@@ -22,7 +22,7 @@ df.to_sql("languages", conn, if_exists="replace", index=False)
 # Close connection
 conn.close()
 
-# Step 10.2: Incrementally (AKA manually...) filter out valid language Entries and Update Tuples with Valid Languages
+# Step 10.2: Incrementally (AKA manually...) filter out valid language entries and update tuples with valid languages
 # SQL
 """SELECT * FROM languages 
 WHERE supported_language NOT IN (
@@ -134,6 +134,10 @@ import pandas as pd
 
 # Connect to SQLite
 conn = sqlite3.connect("steam_analysis_cleaned.sqlite")
+
+
+# ??? Improvement: save each table to CSV after updating it instead of at the end. Saves memory.
+# ??? Saved to CSV to satisfy assignment requirement (and backup), not necessary for further steps.
 
 # Save `overall` table
 df_overall = pd.read_sql("SELECT * FROM overall", conn)
